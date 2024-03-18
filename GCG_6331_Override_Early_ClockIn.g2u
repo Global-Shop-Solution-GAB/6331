@@ -1,0 +1,109 @@
+﻿Program.Sub.ScreenSU.Start
+Gui.Form..Create(BaseForm)
+Gui.Form..Caption("Early Clock in Approval Needed!")
+Gui.Form..Size(355,183)
+Gui.Form..MinX(0)
+Gui.Form..MinY(0)
+Gui.Form..Position(0,0)
+Gui.Form..AlwaysOnTop(False)
+Gui.Form..FontName("Tahoma")
+Gui.Form..FontSize(8.25)
+Gui.Form..ControlBox(True)
+Gui.Form..MaxButton(True)
+Gui.Form..MinButton(True)
+Gui.Form..MousePointer(0)
+Gui.Form..Moveable(True)
+Gui.Form..Sizeable(True)
+Gui.Form..ShowInTaskBar(True)
+Gui.Form..TitleBar(True)
+Gui.Form..Event(UnLoad,Form_UnLoad)
+Gui.Form.lbl1.Create(Label,"Your supervisor has to approve early clock-in.",True,247,14,0,14,5,True,0,"Tahoma",9,,0,0)
+Gui.Form.lbl1.BorderStyle(0)
+Gui.Form.lbl2.Create(Label,"Username",True,48,13,0,96,26,True,0,"Tahoma",8.25,,0,0)
+Gui.Form.lbl2.BorderStyle(0)
+Gui.Form.lbl3.Create(Label,"Password",True,46,13,0,98,74,True,0,"Tahoma",8.25,,0,0)
+Gui.Form.lbl3.BorderStyle(0)
+Gui.Form.txtUN.Create(TextBox,"",True,165,20,0,94,46,True,0,"Tahoma",8.25,,1)
+Gui.Form.txtPW.Create(TextBox,"",True,163,20,0,95,93,True,0,"Tahoma",8.25,,1)
+Gui.Form.txtPW.PasswordChar("*")
+Gui.Form.cmdSubmit.Create(Button)
+Gui.Form.cmdSubmit.Enabled(True)
+Gui.Form.cmdSubmit.Visible(True)
+Gui.Form.cmdSubmit.Zorder(0)
+Gui.Form.cmdSubmit.Size(75,23)
+Gui.Form.cmdSubmit.Position(131,123)
+Gui.Form.cmdSubmit.Caption("Submit")
+Gui.Form.cmdSubmit.FontName("Tahoma")
+Gui.Form.cmdSubmit.FontSize(8.25)
+Gui.Form.cmdSubmit.Event(MouseClick,cmdSubmit_MouseClick)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+Program.Sub.Main.Start
+'Bryan Pham
+'04/23/2021
+'For MUM Industry
+'Business case: Mum Industries has shift rules in place to not allow early clocking in on shifts more than 6minutesearly. They are looking to get an override program that allows for supervisor or manager to overridethis when they approve the early clocking in without having to do a lot of employee shift schedule manual manipulation. Most of these cases are not known enough in advance to plan for, this would allow employee to clock in early on the fly. They would want a maintenance program to add and remove approvers as needed.
+
+'Hook: 36510
+f.Intrinsic.Control.If(v.Caller.Hook,<>,"36510")
+	F.Intrinsic.Control.End
+f.Intrinsic.Control.EndIf
+
+Function.Intrinsic.UI.UsePixels ' Allows you to use Pixels instead of Twips throughout
+v.Local.sEmp.Declare
+f.Global.Security.GetEmpNoFromUser(v.Caller.User,v.Local.sEmp)
+
+'check if employee clocks in early
+f.Intrinsic.Control.If(v.Passed.CLOCK-IN-EARLY,<>,0)
+	gui.Form..Show
+f.Intrinsic.Control.EndIf
+
+Program.Sub.Main.End
+Program.Sub.cmdSubmit_MouseClick.Start
+v.Local.sUserName.Declare
+v.Local.sPW.Declare
+v.Local.bPass.Declare
+v.Local.bInGroup.Declare
+v.Local.sEmp.Declare
+v.Local.sUserName.Set(v.Screen.Form!txtUN.Text)
+v.Local.sPW.Set(v.Screen.Form!txtPW.Text)
+v.Local.sRet.Declare
+
+'check if user is supervisor
+f.Global.Security.IsInGroup(v.Local.sUserName,"ECLOCKIN",v.Caller.CompanyCode,v.Local.bInGroup)
+f.Intrinsic.Control.If(v.Local.bInGroup.Not)
+	f.Intrinsic.UI.Msgbox("You have to be Supervisor to override early clock-in.","Warning!",0,v.Local.sRet)
+	
+	f.Intrinsic.Control.If(v.Local.sRet,=,1,or,v.Local.sRet,=,2)
+		gui.Form..Show
+	f.Intrinsic.Control.EndIf
+f.Intrinsic.Control.Else
+	f.Global.Security.GetEmpNoFromUser(v.Local.sUserName,v.Local.sEmp)
+'validate username and password
+	f.Global.Security.ValidateUser(v.Caller.CompanyCode,v.Local.sUserName,v.Local.sPW,v.Local.bPass)
+	f.Intrinsic.Control.If(v.Local.bPass)
+		'if supervisor approves early clock in
+		v.Passed.CLOCK-IN-EARLY.Set("0")
+		f.Intrinsic.Control.CallSub("Form_Unload")
+	f.Intrinsic.Control.Else
+		f.Intrinsic.UI.Msgbox("You have entered wrong credentials. Please try again.","Warning!",0,v.Local.sRet)
+		
+		f.Intrinsic.Control.If(v.Local.sRet,=,1,or,v.Local.sRet,=,2)
+			gui.Form..Show
+		f.Intrinsic.Control.EndIf
+	f.Intrinsic.Control.EndIf
+f.Intrinsic.Control.EndIf
+
+
+Program.Sub.cmdSubmit_MouseClick.End
+
+Program.Sub.Form_UnLoad.Start
+f.Intrinsic.Control.End
+Program.Sub.Form_UnLoad.End
+
+Program.Sub.Comments.Start
+${$5$}$3.0.0.0$}$1
+${$6$}$bpham$}$20220112152413521$}$Di0riF4Q5RIv6jxva5zSWBaTvp+T0Dt6ZcbViIG8ofgdFxQNOLQfOkZRTCpmJsZrYhhfPhoHbjw=
+Program.Sub.Comments.End
